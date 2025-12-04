@@ -25,8 +25,8 @@ class CreateRootUserCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $username = 'root';
-        $plainPassword = 'Root9856!';
+        $username = 'admin';
+        $plainPassword = 'coach';
         $roles = ['ROLE_ADMIN'];
 
         $userRepo = $this->entityManager->getRepository(User::class);
