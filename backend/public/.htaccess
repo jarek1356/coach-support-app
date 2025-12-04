@@ -1,0 +1,14 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # >>> PRZEKAZANIE NAGŁÓWKA AUTHORIZATION DO PHP <<<
+    RewriteCond %{HTTP:Authorization} ^(.*)
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%1]
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+    # ^ obie linie są bezpieczne – jedna ustawia zmienną środowiskową przez mod_rewrite,
+    #   druga dla pewności przez SetEnvIf (różne środowiska Apache zachowują się odrobinę inaczej)
+
+    # Front controller API Platform / Symfony
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [QSA,L]
+</IfModule>
