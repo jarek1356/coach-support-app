@@ -1,0 +1,27 @@
+Symfony / PHP
+/vendor/
+/var/cache/
+/var/log/
+/var/sessions/
+/.env.local
+/.env..local
+/public/bundles/
+/node_modules/
+
+React / frontend
+/frontend/node_modules/
+/frontend/build/
+/frontend/.env.local
+
+#Database
+/data/
+
+Docker
+/docker-compose.override.yml
+
+MacOS
+.DS_Store
+
+IDE
+/.idea/
+/.iml
