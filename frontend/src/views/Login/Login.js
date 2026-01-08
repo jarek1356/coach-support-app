@@ -1,14 +1,11 @@
-import React, { Component, Fragment } from 'react'; // Pamiętaj o imporcie Fragmentu!
-import LoginForm from './LoginForm';
+// Login.js
+import React from "react";
+import LoginForm from "./LoginForm";
 
-export default class Login extends Component {
-  render() {
-    return (
-      <>
-        <div className='login-bg'>
-         <LoginForm />
-        </div>
-      </>
-    );
-  }
+export default function Login({ onLogin }) {
+  return (
+    <div className="login-bg">
+      <LoginForm onLogin={onLogin} />
+    </div>
+  );
 }
