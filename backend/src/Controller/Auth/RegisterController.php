@@ -4,37 +4,49 @@ namespace App\Controller\Auth;
 
 use App\Entity\User\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpKernel\Attribute\AsController;
+use Symfony\Component\Serializer\SerializerInterface;
 
-class RegisterController
+#[AsController]
+class RegisterController extends AbstractController
 {
-    #[Route('/api/register', name: 'api_register', methods: ['POST'])]
-    public function __invoke(
-        Request $request,
-        EntityManagerInterface $em,
-        UserPasswordHasherInterface $hasher
-    ): JsonResponse {
-        $data = json_decode($request->getContent(), true) ?? [];
-        $username = $data['username'] ?? null;
-        $plain = $data['password'] ?? null;
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly UserPasswordHasherInterface $passwordHasher,
+        private readonly SerializerInterface $serializer
+    ) {}
 
-        if (!$username || !$plain) {
-            return new JsonResponse(['message' => 'username i password są wymagane'], 400);
+    public function __invoke(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        $user = new User();
+        $user->setUsername($data['username'] ?? '');
+
+        // Haszowanie hasła
+        if (!empty($data['password'])) {
+            $hashedPassword = $this->passwordHasher->hashPassword($user, $data['password']);
+            $user->setPassword($hashedPassword);
         }
 
-        $exists = $em->getRepository(User::class)->findOneBy(['username' => $username]);
-        if ($exists) {
-            return new JsonResponse(['message' => 'użytkownik już istnieje'], 409);
+        // --- OBSŁUGA RÓL ---
+        if (!empty($data['roles']) && is_array($data['roles'])) {
+            // Tutaj wpadnie ROLE_ADMIN lub ROLE_PARENT z Twojego JSONa
+            $user->setRoles($data['roles']);
+        } else {
+            $user->setRoles([User::ROLE_PLAYER]);
         }
 
-        $user = (new User())->setUsername($username);
-        $user->setPassword($hasher->hashPassword($user, $plain));
-        $em->persist($user);
-        $em->flush();
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
 
-        return new JsonResponse(['message' => 'ok'], 201);
+        // Zwracamy czysty JSON z nowym użytkownikiem
+        $json = $this->serializer->serialize($user, 'json', ['groups' => ['user:read']]);
+        
+        return new JsonResponse($json, 201, [], true);
     }
 }

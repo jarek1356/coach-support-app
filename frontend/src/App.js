@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-route
 import Login from "./views/Login/Login";
 import AdminDashboard from "./views/Dashboard/AdminDashboard";
 import PlayerDashboard from "./views/Dashboard/PlayerDashboard";
+import ParentDashboard from "./views/Dashboard/ParentDashboard"; 
 
 // Wrapper, żeby użyć useNavigate
 function LoginWrapper() {
@@ -13,13 +14,11 @@ function LoginWrapper() {
     localStorage.setItem("roles", JSON.stringify(roles));
     localStorage.setItem("username", username);
 
-    console.log("Token zapisany w localStorage:", token);
-    console.log("Role zapisane w localStorage:", roles);
-    console.log("Username zapisany w localStorage:", username);
-
-    // przekierowanie po roli
+    // Przekierowanie na podstawie ról
     if (roles.includes("ROLE_ADMIN")) {
       navigate("/admin");
+    } else if (roles.includes("ROLE_PARENT")) {
+      navigate("/parent");
     } else {
       navigate("/player");
     }
@@ -34,6 +33,7 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginWrapper />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/parent" element={<ParentDashboard />} /> {/* Dodana trasa */}
         <Route path="/player" element={<PlayerDashboard />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
