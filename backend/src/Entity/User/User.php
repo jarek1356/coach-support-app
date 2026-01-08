@@ -8,14 +8,17 @@ use App\Controller\Auth\RegisterController;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity]
-#[ORM\Table(name: '`user`')]
+#[ORM\Table(name: '"user"')] // Cudzysłów jest niezbędny dla PostgreSQL
 #[ApiResource(
     operations: [
         new Post(
             uriTemplate: '/register',
             controller: RegisterController::class,
+            normalizationContext: ['groups' => ['user:read']],
+            denormalizationContext: ['groups' => ['user:write']],
             read: false,
             deserialize: false,
             name: 'api_register',
@@ -24,16 +27,23 @@ use Symfony\Component\Security\Core\User\UserInterface;
 )]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
+    public const ROLE_PLAYER = 'ROLE_PLAYER';
+    public const ROLE_PARENT = 'ROLE_PARENT';
+    public const ROLE_ADMIN  = 'ROLE_ADMIN';
+
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     #[ORM\Column(type: 'integer')]
+    #[Groups(['user:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 60, unique: true)]
+    #[Groups(['user:read', 'user:write'])]
     private ?string $username = null;
 
     /** @var string[] */
     #[ORM\Column(type: 'json')]
+    #[Groups(['user:read', 'user:write'])]
     private array $roles = [];
 
     #[ORM\Column(name: 'password', type: 'string', length: 255)]
@@ -41,16 +51,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function __construct()
     {
-        $this->roles = ['ROLE_USER'];
+        $this->roles = [self::ROLE_PLAYER];
     }
 
-    // ===== ID =====
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    // ===== Username / Identifier =====
     public function getUserIdentifier(): string
     {
         return (string) ($this->username ?? '');
@@ -67,12 +75,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // ===== Roles =====
     public function getRoles(): array
     {
-        $roles = $this->roles ?: [];
-        if (!in_array('ROLE_USER', $roles, true)) {
-            $roles[] = 'ROLE_USER';
+        $roles = $this->roles;
+        if (!in_array(self::ROLE_PLAYER, $roles, true)) {
+            $roles[] = self::ROLE_PLAYER;
         }
         return array_values(array_unique($roles));
     }
@@ -83,7 +90,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    // ===== Password =====
     public function getPassword(): string
     {
         return $this->password;
@@ -102,6 +108,5 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function eraseCredentials(): void
     {
-        // np. $this->plainPassword = null;
     }
 }
