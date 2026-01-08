@@ -1,51 +1,46 @@
 version: '3.8'
 
 services:
-  # --- 1. BAZA DANYCH (PostgreSQL) ---
-  database:
-    image: postgres:15-alpine
-    container_name: my_project_db
+  db:
+    image: postgres:16
+    container_name: coach_support_db
     environment:
-      POSTGRES_DB: app_db
-      POSTGRES_USER: app_user
-      POSTGRES_PASSWORD: secret_password
+      POSTGRES_DB: coach_support_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: coach123
+    volumes:
+      - ./data/db:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    volumes:
-      - db_data:/var/lib/postgresql/data
+    networks:
+      - coach_support_net
 
-  # --- 2. BACKEND (Symfony PHP-FPM) ---
   backend:
-    build: ./backend            # Buduje obraz na podstawie backend/Dockerfile
-    container_name: my_project_backend
-    working_dir: /var/www/html
-    volumes:
-      - ./backend:/var/www/html # Montuje lokalny folder backend do kontenera
+    build:
+      context: ./backend
+    container_name: coach_support_backend
     depends_on:
-      - database
-
-  # --- 3. SERWER WWW (Nginx dla Symfony) ---
-  nginx:
-    image: nginx:alpine
-    container_name: my_project_nginx
+      - db
     ports:
       - "8080:80"
+    environment:
+      DATABASE_URL: "postgresql://postgres:coach123@db:5432/coach_support_db?serverVersion=16&charset=utf8"
+    networks:
+      - coach_support_net
     volumes:
       - ./backend:/var/www/html
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: coach_support_frontend
+    ports:
+      - "3000:80"
+    networks:
+      - coach_support_net
     depends_on:
       - backend
 
-  # --- 4. FRONTEND (React) ---
-  frontend:
-    image: node:20-alpine
-    container_name: my_project_frontend
-    working_dir: /app
-    volumes:
-      - ./frontend:/app
-    ports:
-      - "5173:5173"
-    command: npm run dev -- --host
-
-volumes:
-  db_data:
+networks:
+  coach_support_net:
+    driver: bridge

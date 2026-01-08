@@ -1,0 +1,27 @@
+api_platform:
+  title: Hello API Platform
+  version: 1.0.0
+
+  defaults:
+    stateless: true
+    cache_headers:
+      vary: ['Content-Type', 'Authorization', 'Origin']
+
+  mapping:
+    paths:
+      - '%kernel.project_dir%/src/Entity'
+
+  formats:
+    jsonld: ['application/ld+json']
+    json:   ['application/json']
+    html:   ['text/html']
+
+  openapi:
+    swagger_ui_extra_configuration:
+      persistAuthorization: true
+
+  swagger:
+    api_keys:
+      bearer:
+        name: Authorization
+        type: header

@@ -1,44 +1,99 @@
-const LoginForm = () => {
+import { useState } from "react";
+import { parseJwt } from "../../utils/jwtUtils";
+import loginIcon from '../../assets/login-icon.png';
+import loginIconBtn from '../../assets/login-icon-btn.png';
+
+
+const LoginForm = ({ onLogin }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    try {
+      const response = await fetch("http://localhost:8080/api/login", {
+        method: "POST",
+        headers: {
+          "accept": "application/json",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username: email, password })
+      });
+
+      if (!response.ok) {
+        let msg = "Nieprawidłowy login lub hasło";
+        try {
+          const data = await response.json();
+          if (data?.message) msg = data.message;
+        } catch {}
+        setError(msg);
+        return;
+      }
+
+      const data = await response.json();
+      const jwt = data.token ?? data.accessToken;
+
+      if (!jwt) {
+        setError("Brak tokena w odpowiedzi serwera");
+        return;
+      }
+
+      localStorage.setItem("token", jwt);
+      const payload = parseJwt(jwt);
+      const roles = payload?.roles || [];
+
+      localStorage.setItem("roles", JSON.stringify(roles));
+
+      if (onLogin) onLogin(jwt, roles, payload.username || "");
+
+    } catch (err) {
+      console.error("Błąd logowania:", err);
+      setError("Wystąpił błąd połączenia z serwerem");
+    }
+  };
+
   return (
     <div className="login-card">
+      <img src={loginIcon} alt="Login Icon" className="login-icon" />
       <h5 className="title">System Zarządzania Kadrą</h5>
       <p className="subtitle">Zaloguj się do systemu</p>
 
-      <form className="login-form">
+      <form className="login-form" onSubmit={handleSubmit}>
         <div className="flex flex-col">
-        <label htmlFor="email">Email</label>
-        <input
-          type="email"
-          id="email"
-          placeholder="twój.email@klub.pl"
-          className="input-field"
-          required
-        />
-        </div>
-        <div className="flex flex-col">
-        <label htmlFor="password">Hasło</label>
-        <input
-          type="password"
-          id="password"
-          placeholder="********"
-          className="input-field"
-          required
-        />
+          <label>Email</label>
+          <input
+            type="text"
+            placeholder="Email"
+            className="input-field"
+            required
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+          />
         </div>
 
-        <button type="submit" className="login-button">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            className="arrow-icon"
-          >
-            <path
-              fillRule="evenodd"
-              d="M3 10a.75.75 0 0 1 .75-.75h10.94l-3.22-3.22a.75.75 0 0 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 0 1-1.06-1.06l3.22-3.22H3.75A.75.75 0 0 1 3 10Z"
-              clipRule="evenodd"
-            />
-          </svg>
+        <div className="flex flex-col">
+          <label>Hasło</label>
+          <input
+            type="password"
+            placeholder="***********"
+            className="input-field"
+            required
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+          />
+        </div>
+
+        {error && (
+          <p className="error-message" style={{ color: "red", margin: "10px 0" }}>
+            {error}
+          </p>
+        )}
+
+        <button type="submit" className="login-button green-btn">
+          <img src={loginIconBtn} alt="Login Button Icon" className="button-icon" />
           Zaloguj
         </button>
       </form>
