@@ -35,7 +35,7 @@ services:
       context: ./frontend
     container_name: coach_support_frontend
     ports:
-      - "3000:80"
+      - "3001:80"
     networks:
       - coach_support_net
     depends_on:
