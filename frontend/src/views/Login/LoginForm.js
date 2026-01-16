@@ -1,8 +1,6 @@
 import { useState } from "react";
-import { parseJwt } from "../../utils/jwtUtils";
 import loginIcon from '../../assets/login-icon.png';
 import loginIconBtn from '../../assets/login-icon-btn.png';
-
 
 const LoginForm = ({ onLogin }) => {
   const [email, setEmail] = useState("");
@@ -17,10 +15,10 @@ const LoginForm = ({ onLogin }) => {
       const response = await fetch("http://localhost:8080/api/login", {
         method: "POST",
         headers: {
-          "accept": "application/json",
-          "Content-Type": "application/json"
+          accept: "application/json",
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username: email, password })
+        body: JSON.stringify({ username: email, password }),
       });
 
       if (!response.ok) {
@@ -42,12 +40,7 @@ const LoginForm = ({ onLogin }) => {
       }
 
       localStorage.setItem("token", jwt);
-      const payload = parseJwt(jwt);
-      const roles = payload?.roles || [];
-
-      localStorage.setItem("roles", JSON.stringify(roles));
-
-      if (onLogin) onLogin(jwt, roles, payload.username || "");
+      if (onLogin) onLogin(jwt);
 
     } catch (err) {
       console.error("Błąd logowania:", err);
@@ -70,7 +63,7 @@ const LoginForm = ({ onLogin }) => {
             className="input-field"
             required
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
 
@@ -82,7 +75,7 @@ const LoginForm = ({ onLogin }) => {
             className="input-field"
             required
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 

@@ -1,29 +1,24 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import Login from "./views/Login/Login";
-import AdminDashboard from "./views/Dashboard/AdminDashboard";
-import PlayerDashboard from "./views/Dashboard/PlayerDashboard";
-import ParentDashboard from "./views/Dashboard/ParentDashboard"; 
 
-// Wrapper, żeby użyć useNavigate
+import Login from "./views/Login/Login";
+import Dashboard from "./views/Dashboard/Dashboard";
+import Calendar from "./views/Calendar/Calendar";
+import Attendance from "./views/Attendance/Attendance";
+import Settings from "./views/Settings/Settings";
+import Stats from "./views/Stats/Stats";
+import Tests from "./views/Tests/Tests";
+import Users from "./views/Users/Users";
+
+import ProtectedRoute from "./utils/ProtectedRoute";
+import MainLayout from "./components/MainLayout"; // Importujemy nowy Layout
+
 function LoginWrapper() {
   const navigate = useNavigate();
-
-  const handleLogin = (token, roles, username) => {
+  const handleLogin = (token) => {
     localStorage.setItem("token", token);
-    localStorage.setItem("roles", JSON.stringify(roles));
-    localStorage.setItem("username", username);
-
-    // Przekierowanie na podstawie ról
-    if (roles.includes("ROLE_ADMIN")) {
-      navigate("/admin");
-    } else if (roles.includes("ROLE_PARENT")) {
-      navigate("/parent");
-    } else {
-      navigate("/player");
-    }
+    navigate("/dashboard");
   };
-
   return <Login onLogin={handleLogin} />;
 }
 
@@ -32,9 +27,17 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<LoginWrapper />} />
-        <Route path="/admin" element={<AdminDashboard />} />
-        <Route path="/parent" element={<ParentDashboard />} /> {/* Dodana trasa */}
-        <Route path="/player" element={<PlayerDashboard />} />
+
+        <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/calendar" element={<Calendar />} />
+          <Route path="/attendance" element={<Attendance />} />
+          <Route path="/stats" element={<Stats />} />
+          <Route path="/tests" element={<Tests />} />
+          <Route path="/users" element={<Users />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
+
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>
