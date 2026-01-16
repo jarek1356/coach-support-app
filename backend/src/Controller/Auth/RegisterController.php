@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 #[AsController]
 class RegisterController extends AbstractController
@@ -17,7 +18,8 @@ class RegisterController extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly UserPasswordHasherInterface $passwordHasher,
-        private readonly SerializerInterface $serializer
+        private readonly SerializerInterface $serializer,
+        private readonly ValidatorInterface $validator
     ) {}
 
     public function __invoke(Request $request): JsonResponse
@@ -26,6 +28,9 @@ class RegisterController extends AbstractController
 
         $user = new User();
         $user->setUsername($data['username'] ?? '');
+        $user->setFirstName($data['firstName'] ?? '');
+        $user->setLastName($data['lastName'] ?? '');
+        $user->setEmail($data['email'] ?? '');
 
         // Haszowanie hasła
         if (!empty($data['password'])) {
@@ -33,20 +38,28 @@ class RegisterController extends AbstractController
             $user->setPassword($hashedPassword);
         }
 
-        // --- OBSŁUGA RÓL ---
+        // Obsługa ról
         if (!empty($data['roles']) && is_array($data['roles'])) {
-            // Tutaj wpadnie ROLE_ADMIN lub ROLE_PARENT z Twojego JSONa
             $user->setRoles($data['roles']);
         } else {
             $user->setRoles([User::ROLE_PLAYER]);
         }
 
+        // Walidacja
+        $errors = $this->validator->validate($user);
+        if (count($errors) > 0) {
+            $errorMessages = [];
+            foreach ($errors as $error) {
+                $errorMessages[$error->getPropertyPath()] = $error->getMessage();
+            }
+            return new JsonResponse(['errors' => $errorMessages], 400);
+        }
+
         $this->entityManager->persist($user);
         $this->entityManager->flush();
 
-        // Zwracamy czysty JSON z nowym użytkownikiem
         $json = $this->serializer->serialize($user, 'json', ['groups' => ['user:read']]);
-        
+
         return new JsonResponse($json, 201, [], true);
     }
 }
